@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     // Stream body to Vercel Blob
     const blob = await put(`onboarding/${sessionId}/${filename}`, req, {
-      public: 'private', // TODO: consider making these private with signed URLs
+      private: 'private', // TODO: consider making these private with signed URLs
       token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
