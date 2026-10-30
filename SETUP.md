@@ -153,6 +153,58 @@ Crear pagina, pegar HTML de `public/onboarding.html`. **Importante:** editar la 
 
 ---
 
+## 8. Agente de Leads (taxes, notarizacion/apostilla, due diligence)
+
+Flujo: Formulario web → `POST /api/lead-intake` → Airtable `Leads` → Claude califica + redacta borrador → email a ADMIN_EMAIL con boton → `/api/approve-lead` (pagina de confirmacion) → "Enviar al cliente" → Resend envia y marca "Respondido".
+**Nada se envia al lead sin aprobacion.** Precios en `lib/pricing.js` → `SERVICE_PRICES`.
+
+### 8a. Tabla `Leads` en Airtable (misma base)
+
+| Campo | Tipo |
+|-------|------|
+| Nombre | Single line text |
+| Email | Email |
+| Telefono | Phone |
+| Pais | Single line text |
+| Servicio Solicitado | Single line text |
+| Mensaje | Long text |
+| Origen | Single line text |
+| Estado Lead | Single select (Nuevo, Borrador - Pendiente Aprobacion, Respondido, Error - Revisar Manual) |
+| Fecha Ingreso | Date (include time) |
+| Servicio Detectado | Single select (notarizacion_apostilla, taxes_nra, taxes_residente, due_diligence, otro) |
+| Segmento | Single select (no_residente, residente_florida, b2b_referidor, inversor_empresa, otro) |
+| Score | Number (integer) |
+| Prioridad | Single select (alta, media, baja) |
+| Resumen | Long text |
+| Datos Faltantes | Long text |
+| Alertas Compliance | Long text |
+| Borrador Asunto | Single line text |
+| Borrador Email | Long text |
+| Fecha Respuesta | Date (include time) |
+
+### 8b. Env vars nuevas en Vercel
+
+```
+ANTHROPIC_API_KEY=sk-ant-xxx
+LEAD_APPROVAL_SECRET=<string aleatorio largo>
+API_URL=https://api.emprendenus.com
+```
+
+- `ANTHROPIC_API_KEY`: [platform.claude.com](https://platform.claude.com) → Settings → API Keys → Create Key. Cargar credito en Billing.
+- `LEAD_APPROVAL_SECRET`: generar con `openssl rand -hex 32`. Firma el link de aprobacion.
+
+### 8c. Formulario en WordPress
+
+POST JSON a `https://api.emprendenus.com/api/lead-intake`:
+
+```json
+{ "nombre": "", "email": "", "telefono": "", "pais": "", "servicio": "", "mensaje": "", "origen": "web", "website": "" }
+```
+
+`website` es honeypot anti-bots: input oculto con CSS, siempre vacio.
+
+---
+
 ## Troubleshooting
 
 **CORS errors desde el cotizador:**
@@ -181,3 +233,5 @@ Verificar que Blob este conectado al proyecto y que `BLOB_READ_WRITE_TOKEN` este
 - [ ] Test completo end-to-end: cotizar → pagar → onboarding → ver en Airtable
 - [ ] Email de confirmacion llega
 - [ ] Notificacion admin llega
+- [ ] Tabla `Leads` creada + `ANTHROPIC_API_KEY` y `LEAD_APPROVAL_SECRET` en Vercel
+- [ ] Test lead: enviar formulario → llega email admin → aprobar → llega respuesta al lead
